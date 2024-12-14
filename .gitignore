@@ -13,11 +13,6 @@ yarn.lock
 .DS_Store
 Thumbs.db
 
-# Ignore environment files (you might want to keep your .env in some cases)
-.env
-.env.local
-.env.*.local
-
 # Ignore build directories (if any)
 build/
 dist/
