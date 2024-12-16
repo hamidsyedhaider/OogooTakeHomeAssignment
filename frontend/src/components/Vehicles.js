@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Container, Typography, Box, Button, TextField } from '@mui/material';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -8,31 +9,36 @@ function Vehicles() {
     const [vehicles, setVehicles] = useState([]);
     const [totalPages, setTotalPages] = useState(1);
     const [currentPage, setCurrentPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        axios.get(`${BACKEND_URL}/api/vehicles/searchVehicles`, {
-            params: {
-                page: currentPage,
-                searchQuery: searchQuery,
-            }
-        })
-        .then(response => {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentSearchQuery = searchParams.get('search') || '';
+
+    const fetchVehicles = async (page) => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/api/vehicles/searchVehicles`, {
+                params: { page, searchQuery: currentSearchQuery },
+            });
+
             setVehicles(response.data.vehicles);
             setTotalPages(response.data.totalPages);
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error fetching vehicles:', error);
-        });
-    }, [currentPage, searchQuery]);
-
-    const handlePageChange = (newPage) => {
-        setCurrentPage(newPage);
+        }
     };
 
-    const handleSearchChange = (event) => {
-        setSearchQuery(event.target.value);
-        setCurrentPage(1);
+    // Fetch data whenever searchParams change
+    useEffect(() => {
+        fetchVehicles(currentPage, currentSearchQuery);
+    }, [currentPage, currentSearchQuery]);
+
+    const handleSearchChange = (e) => {
+        const searchValue = e.target.value;
+        setSearchParams({ search: searchValue, page: 1 }); // Reset to page 1 on new search
+    };
+
+    const handlePageChange = (newPage) => {
+        setSearchParams({ search: currentSearchQuery, page: newPage });
+        setCurrentPage(newPage);
     };
 
     return (
@@ -47,7 +53,7 @@ function Vehicles() {
                         label="Search Vehicles"
                         variant="outlined"
                         size="small"
-                        value={searchQuery}
+                        value={currentSearchQuery}
                         onChange={handleSearchChange}
                         sx={{ width: '300px' }}
                     />
